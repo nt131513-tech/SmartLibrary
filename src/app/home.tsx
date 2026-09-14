@@ -11,7 +11,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
 
-      {/* HEADER */}
+      {/* ================= HEADER ================= */}
 
       <View style={styles.header}>
 
@@ -25,7 +25,10 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.profileButton}>
+        <TouchableOpacity
+          style={styles.profileButton}
+          activeOpacity={0.8}
+        >
           <Text style={styles.profileIcon}>
             👤
           </Text>
@@ -33,7 +36,8 @@ export default function HomeScreen() {
 
       </View>
 
-      {/* BANNER */}
+
+      {/* ================= BANNER ================= */}
 
       <View style={styles.banner}>
 
@@ -43,12 +47,14 @@ export default function HomeScreen() {
 
         <Text style={styles.bannerText}>
           Tìm sách, mượn sách và đặt chỗ
+          {'\n'}
           ngồi ngay trên điện thoại.
         </Text>
 
       </View>
 
-      {/* CHỨC NĂNG */}
+
+      {/* ================= CHỨC NĂNG ================= */}
 
       <Text style={styles.sectionTitle}>
         Chức năng chính
@@ -56,7 +62,13 @@ export default function HomeScreen() {
 
       <View style={styles.grid}>
 
-        <TouchableOpacity style={styles.card}>
+        {/* ================= SÁCH ================= */}
+
+        <TouchableOpacity
+          style={styles.card}
+          activeOpacity={0.8}
+          onPress={() => router.push('/books')}
+        >
           <Text style={styles.cardIcon}>
             📚
           </Text>
@@ -70,7 +82,16 @@ export default function HomeScreen() {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.card}>
+
+        {/* ================= ĐẶT CHỖ ================= */}
+
+        <TouchableOpacity
+          style={styles.card}
+          activeOpacity={0.8}
+          onPress={() => {
+            // Sẽ kết nối màn hình đặt chỗ sau
+          }}
+        >
           <Text style={styles.cardIcon}>
             💺
           </Text>
@@ -84,7 +105,16 @@ export default function HomeScreen() {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.card}>
+
+        {/* ================= LỊCH SỬ ================= */}
+
+        <TouchableOpacity
+          style={styles.card}
+          activeOpacity={0.8}
+          onPress={() => {
+            // Sẽ kết nối màn hình lịch sử sau
+          }}
+        >
           <Text style={styles.cardIcon}>
             📋
           </Text>
@@ -98,7 +128,16 @@ export default function HomeScreen() {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.card}>
+
+        {/* ================= THÔNG BÁO ================= */}
+
+        <TouchableOpacity
+          style={styles.card}
+          activeOpacity={0.8}
+          onPress={() => {
+            // Sẽ kết nối màn hình thông báo sau
+          }}
+        >
           <Text style={styles.cardIcon}>
             🔔
           </Text>
@@ -114,10 +153,12 @@ export default function HomeScreen() {
 
       </View>
 
-      {/* ĐĂNG XUẤT */}
+
+      {/* ================= ĐĂNG XUẤT ================= */}
 
       <TouchableOpacity
         style={styles.logoutButton}
+        activeOpacity={0.7}
         onPress={() => router.replace('/')}
       >
         <Text style={styles.logoutText}>
@@ -129,13 +170,22 @@ export default function HomeScreen() {
   );
 }
 
+
+/* ================================================= */
+/* ===================== STYLE ===================== */
+/* ================================================= */
+
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
     backgroundColor: '#F5F7FA',
     paddingHorizontal: 20,
     paddingTop: 55,
   },
+
+
+  /* ================= HEADER ================= */
 
   header: {
     flexDirection: 'row',
@@ -168,6 +218,9 @@ const styles = StyleSheet.create({
     fontSize: 23,
   },
 
+
+  /* ================= BANNER ================= */
+
   banner: {
     backgroundColor: '#1E6FD9',
     borderRadius: 16,
@@ -188,6 +241,9 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 
+
+  /* ================= SECTION ================= */
+
   sectionTitle: {
     fontSize: 19,
     fontWeight: 'bold',
@@ -196,11 +252,17 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
 
+
+  /* ================= GRID ================= */
+
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
+
+
+  /* ================= CARD ================= */
 
   card: {
     width: '48%',
@@ -230,6 +292,9 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
 
+
+  /* ================= LOGOUT ================= */
+
   logoutButton: {
     alignItems: 'center',
     marginTop: 15,
@@ -240,4 +305,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+
 });
