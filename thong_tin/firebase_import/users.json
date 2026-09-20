@@ -1,0 +1,46 @@
+{
+  "L2cWruje0KM4jVypei82pDv60gk2": {
+    "fullName": "Nguyễn Văn A",
+    "email": "user1@example.com",
+    "studentId": "22110001",
+    "phone": "0900000001",
+    "className": "22110CL1",
+    "faculty": "Công nghệ kỹ thuật máy tính",
+    "status": "active",
+    "role": "user"
+  },
+  "9hCVnJSfkVQT2bn6BBVSmnTwnSE2": {
+    "fullName": "Trần Thị B",
+    "email": "user2@example.com",
+    "studentId": "22110002",
+    "phone": "0900000002",
+    "className": "22110CL1",
+    "faculty": "Công nghệ kỹ thuật máy tính",
+    "status": "active",
+    "role": "user"
+  },
+  "DFZqreNeFebSK0NaKcdh6dN1RFZ2": {
+    "fullName": "Mik Tran",
+    "email": "test123@gmail.com",
+    "faculty": "IOT",
+    "status": "active",
+    "role": "user"
+  },
+  "847wzgTbftakt5sc2ex60SQzTlo2": {
+    "fullName": "Quản thư chính",
+    "email": "librarian@smartlibrary.com",
+    "employeeId": "NV000",
+    "department": "Thư viện",
+    "status": "active",
+    "role": "librarian"
+  },
+  "RFliqHreeEOCvCE0iiubOVJ4dzU2": {
+    "fullName": "Lê Văn C",
+    "email": "librarian@example.com",
+    "employeeId": "NV001",
+    "phone": "0900000010",
+    "department": "Thư viện",
+    "status": "active",
+    "role": "librarian"
+  }
+}

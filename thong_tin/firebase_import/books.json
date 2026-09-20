@@ -1,0 +1,38 @@
+{
+  "book001": {
+    "title": "Lập trình C cơ bản",
+    "author": "Nguyễn Văn A",
+    "category": "Lập trình",
+    "isbn": "978001",
+    "shelf": "A1-01",
+    "quantity": 5,
+    "totalQuantity": 5,
+    "available": true,
+    "barcode": "893000000001",
+    "description": "Giáo trình lập trình C cơ bản"
+  },
+  "book002": {
+    "title": "Lập trình Python",
+    "author": "Trần Văn B",
+    "category": "Lập trình",
+    "isbn": "978002",
+    "shelf": "A1-02",
+    "quantity": 4,
+    "totalQuantity": 4,
+    "available": true,
+    "barcode": "893000000002",
+    "description": "Nhập môn Python"
+  },
+  "book003": {
+    "title": "Cấu trúc dữ liệu và giải thuật",
+    "author": "Lê Văn C",
+    "category": "Khoa học máy tính",
+    "isbn": "978003",
+    "shelf": "A1-03",
+    "quantity": 3,
+    "totalQuantity": 3,
+    "available": true,
+    "barcode": "893000000003",
+    "description": "Giáo trình cấu trúc dữ liệu"
+  }
+}

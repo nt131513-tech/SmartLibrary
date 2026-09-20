@@ -55,8 +55,8 @@ export default function BookDetailScreen() {
 
   // ================= MƯỢN SÁCH =================
 
-  const handleBorrow = () => {
-    const success = borrowBook(book.id);
+  const handleBorrow = async () => {
+    const success = await borrowBook(book.id);
 
     if (success) {
       Alert.alert(
@@ -74,8 +74,8 @@ export default function BookDetailScreen() {
 
   // ================= TRẢ SÁCH =================
 
-  const handleReturn = () => {
-    returnBook(book.id);
+  const handleReturn = async () => {
+    await returnBook(book.id);
 
     Alert.alert(
       'Trả sách thành công',

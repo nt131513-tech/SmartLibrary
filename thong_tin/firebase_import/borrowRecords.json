@@ -1,0 +1,9 @@
+{
+  "borrow001": {
+    "userId": "",
+    "bookId": "book001",
+    "borrowDate": "2026-09-20",
+    "returnDate": "",
+    "status": "borrowing"
+  }
+}

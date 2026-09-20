@@ -1,0 +1,19 @@
+{
+  "RFliqHreeEOCvCE0iiubOVJ4dzU2": {
+    "fullName": "Lê Văn C",
+    "email": "librarian@example.com",
+    "employeeId": "NV001",
+    "phone": "0900000010",
+    "department": "Thư viện",
+    "status": "active",
+    "role": "librarian"
+  },
+  "847wzgTbftakt5sc2ex60SQzTlo2": {
+    "fullName": "Quản thư chính",
+    "email": "librarian@smartlibrary.com",
+    "employeeId": "NV000",
+    "department": "Thư viện",
+    "status": "active",
+    "role": "librarian"
+  }
+}

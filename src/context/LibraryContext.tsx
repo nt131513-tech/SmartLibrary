@@ -2,8 +2,19 @@ import {
   createContext,
   ReactNode,
   useContext,
+  useEffect,
   useState,
 } from 'react';
+
+import {
+  get,
+  onValue,
+  push,
+  ref,
+  update,
+} from 'firebase/database';
+
+import { auth, db } from '../config/firebase';
 
 export type Book = {
   id: string;
@@ -11,80 +22,31 @@ export type Book = {
   author: string;
   category: string;
   isbn: string;
-  available: boolean;
+  shelf: string;
   quantity: number;
-  description: string;
+  totalQuantity: number;
+  available: boolean;
+  description?: string;
+  barcode?: string;
+  coverImage?: string;
 };
 
-const initialBooks: Book[] = [
-  {
-    id: '1',
-    title: 'Lập trình C++ cơ bản',
-    author: 'Nguyễn Văn A',
-    category: 'Lập trình',
-    isbn: '9786041234567',
-    available: true,
-    quantity: 5,
-    description:
-      'Cuốn sách cung cấp các kiến thức cơ bản về ngôn ngữ lập trình C++, bao gồm biến, kiểu dữ liệu, câu lệnh điều kiện, vòng lặp, hàm, mảng và lập trình hướng đối tượng.',
-  },
-
-  {
-    id: '2',
-    title: 'Lập trình Python',
-    author: 'Trần Văn B',
-    category: 'Lập trình',
-    isbn: '9786041234568',
-    available: true,
-    quantity: 3,
-    description:
-      'Tài liệu giới thiệu ngôn ngữ Python từ cơ bản đến nâng cao, phù hợp cho sinh viên bắt đầu học lập trình và phát triển ứng dụng.',
-  },
-
-  {
-    id: '3',
-    title: 'Cơ sở dữ liệu',
-    author: 'Lê Văn C',
-    category: 'Công nghệ',
-    isbn: '9786041234569',
-    available: false,
-    quantity: 0,
-    description:
-      'Giới thiệu các khái niệm về cơ sở dữ liệu, mô hình dữ liệu, SQL, thiết kế cơ sở dữ liệu và hệ quản trị cơ sở dữ liệu.',
-  },
-
-  {
-    id: '4',
-    title: 'Trí tuệ nhân tạo',
-    author: 'Phạm Văn D',
-    category: 'AI',
-    isbn: '9786041234570',
-    available: true,
-    quantity: 2,
-    description:
-      'Giới thiệu những kiến thức nền tảng về trí tuệ nhân tạo, học máy và các phương pháp xây dựng hệ thống thông minh.',
-  },
-
-  {
-    id: '5',
-    title: 'Kiến trúc máy tính',
-    author: 'Hoàng Văn E',
-    category: 'Phần cứng',
-    isbn: '9786041234571',
-    available: true,
-    quantity: 4,
-    description:
-      'Trình bày các kiến thức cơ bản về tổ chức và kiến trúc máy tính, bộ xử lý, bộ nhớ, hệ thống vào ra và các thành phần phần cứng.',
-  },
-];
+export type BorrowRecord = {
+  id: string;
+  userId: string;
+  bookId: string;
+  borrowedAt: number;
+  dueDate: number;
+  returnedAt?: number | null;
+  status: 'borrowed' | 'returned';
+};
 
 type LibraryContextType = {
   books: Book[];
-  borrowedBookIds: string[];
-
-  borrowBook: (bookId: string) => boolean;
-  returnBook: (bookId: string) => void;
-
+  borrowRecords: BorrowRecord[];
+  loading: boolean;
+  borrowBook: (bookId: string) => Promise<boolean>;
+  returnBook: (bookId: string) => Promise<boolean>;
   isBorrowed: (bookId: string) => boolean;
 };
 
@@ -97,73 +59,312 @@ export function LibraryProvider({
 }: {
   children: ReactNode;
 }) {
-  const [books, setBooks] = useState<Book[]>(initialBooks);
+  const [books, setBooks] = useState<Book[]>([]);
+  const [borrowRecords, setBorrowRecords] = useState<
+    BorrowRecord[]
+  >([]);
+  const [loading, setLoading] = useState(true);
 
-  const [borrowedBookIds, setBorrowedBookIds] =
-    useState<string[]>([]);
+  // =====================================================
+  // TẢI DANH SÁCH SÁCH TỪ FIREBASE
+  // =====================================================
 
-  /* ================= MƯỢN SÁCH ================= */
+  useEffect(() => {
+    const booksRef = ref(db, 'books');
 
-  const borrowBook = (bookId: string) => {
+    const unsubscribe = onValue(
+      booksRef,
+      (snapshot) => {
+        const data = snapshot.val();
+
+        if (!data) {
+          setBooks([]);
+          setLoading(false);
+          return;
+        }
+
+        const bookList: Book[] = Object.entries(data).map(
+          ([id, value]) => {
+            const book = value as Partial<Book>;
+
+            const quantity = Number(book.quantity ?? 0);
+
+            const totalQuantity = Number(
+              book.totalQuantity ?? quantity
+            );
+
+            return {
+              id,
+              title: String(book.title ?? ''),
+              author: String(book.author ?? ''),
+              category: String(book.category ?? ''),
+              isbn: String(book.isbn ?? ''),
+              shelf: String(book.shelf ?? ''),
+              quantity,
+              totalQuantity,
+              available: quantity > 0,
+              description: String(
+                book.description ?? ''
+              ),
+              barcode: String(book.barcode ?? ''),
+              coverImage: String(book.coverImage ?? ''),
+            };
+          }
+        );
+
+        setBooks(bookList);
+        setLoading(false);
+      },
+      (error) => {
+        console.error(
+          'Lỗi tải danh sách sách:',
+          error
+        );
+
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  // =====================================================
+  // TẢI LỊCH SỬ MƯỢN SÁCH CỦA TÀI KHOẢN HIỆN TẠI
+  // =====================================================
+
+  useEffect(() => {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      setBorrowRecords([]);
+      return;
+    }
+
+    const recordsRef = ref(db, 'borrowRecords');
+
+    const unsubscribe = onValue(
+      recordsRef,
+      (snapshot) => {
+        const data = snapshot.val();
+
+        if (!data) {
+          setBorrowRecords([]);
+          return;
+        }
+
+        const records: BorrowRecord[] = Object.entries(
+          data
+        )
+          .map(([id, value]) => {
+            const record = value as Omit<
+              BorrowRecord,
+              'id'
+            >;
+
+            return {
+              id,
+              ...record,
+            };
+          })
+          .filter(
+            (record) =>
+              record.userId === currentUser.uid
+          )
+          .sort(
+            (a, b) => b.borrowedAt - a.borrowedAt
+          );
+
+        setBorrowRecords(records);
+      },
+      (error) => {
+        console.error(
+          'Lỗi tải lịch sử mượn sách:',
+          error
+        );
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  // =====================================================
+  // KIỂM TRA SÁCH CÓ ĐANG ĐƯỢC NGƯỜI DÙNG MƯỢN KHÔNG
+  // =====================================================
+
+  const isBorrowed = (bookId: string): boolean => {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      return false;
+    }
+
+    return borrowRecords.some(
+      (record) =>
+        record.userId === currentUser.uid &&
+        record.bookId === bookId &&
+        record.status === 'borrowed'
+    );
+  };
+
+  // =====================================================
+  // MƯỢN SÁCH
+  // =====================================================
+
+  const borrowBook = async (
+    bookId: string
+  ): Promise<boolean> => {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      console.log('Chưa có tài khoản đăng nhập');
+      return false;
+    }
+
     const book = books.find(
       (item) => item.id === bookId
     );
 
-    if (!book || book.quantity <= 0) {
+    if (!book) {
+      console.log('Không tìm thấy sách');
       return false;
     }
 
-    setBooks((currentBooks) =>
-      currentBooks.map((item) =>
-        item.id === bookId
-          ? {
-              ...item,
-              quantity: item.quantity - 1,
-              available: item.quantity - 1 > 0,
-            }
-          : item
-      )
-    );
+    if (book.quantity <= 0) {
+      console.log('Sách đã hết');
+      return false;
+    }
 
-    setBorrowedBookIds((currentIds) => [
-      ...currentIds,
-      bookId,
-    ]);
+    // Không cho mượn cùng một cuốn sách nhiều lần
+    if (isBorrowed(bookId)) {
+      console.log('Bạn đang mượn sách này');
+      return false;
+    }
 
-    return true;
+    try {
+      const newQuantity = book.quantity - 1;
+
+      const borrowedAt = Date.now();
+
+      // Thời hạn mượn: 14 ngày
+      const dueDate =
+        borrowedAt + 14 * 24 * 60 * 60 * 1000;
+
+      // Cập nhật số lượng sách
+      await update(ref(db, `books/${bookId}`), {
+        quantity: newQuantity,
+        available: newQuantity > 0,
+      });
+
+      // Tạo bản ghi lịch sử mượn
+      const newRecordRef = push(
+        ref(db, 'borrowRecords')
+      );
+
+      await update(newRecordRef, {
+        userId: currentUser.uid,
+        bookId,
+        borrowedAt,
+        dueDate,
+        returnedAt: null,
+        status: 'borrowed',
+      });
+
+      return true;
+    } catch (error) {
+      console.error(
+        'Lỗi khi mượn sách:',
+        error
+      );
+
+      return false;
+    }
   };
 
-  /* ================= TRẢ SÁCH ================= */
+  // =====================================================
+  // TRẢ SÁCH
+  // =====================================================
 
-  const returnBook = (bookId: string) => {
-    setBooks((currentBooks) =>
-      currentBooks.map((item) =>
-        item.id === bookId
-          ? {
-              ...item,
-              quantity: item.quantity + 1,
-              available: true,
-            }
-          : item
-      )
+  const returnBook = async (
+    bookId: string
+  ): Promise<boolean> => {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      console.log('Chưa có tài khoản đăng nhập');
+      return false;
+    }
+
+    const book = books.find(
+      (item) => item.id === bookId
     );
 
-    setBorrowedBookIds((currentIds) =>
-      currentIds.filter((id) => id !== bookId)
-    );
+    if (!book) {
+      console.log('Không tìm thấy sách');
+      return false;
+    }
+
+    try {
+      const newQuantity = Math.min(
+        book.quantity + 1,
+        book.totalQuantity
+      );
+
+      // Cập nhật số lượng sách
+      await update(ref(db, `books/${bookId}`), {
+        quantity: newQuantity,
+        available: newQuantity > 0,
+      });
+
+      // Lấy toàn bộ lịch sử mượn
+      const recordsSnapshot = await get(
+        ref(db, 'borrowRecords')
+      );
+
+      if (recordsSnapshot.exists()) {
+        const records = recordsSnapshot.val();
+
+        for (const recordId of Object.keys(records)) {
+          const record = records[recordId];
+
+          if (
+            record.userId === currentUser.uid &&
+            record.bookId === bookId &&
+            record.status === 'borrowed'
+          ) {
+            await update(
+              ref(db, `borrowRecords/${recordId}`),
+              {
+                status: 'returned',
+                returnedAt: Date.now(),
+              }
+            );
+
+            return true;
+          }
+        }
+      }
+
+      return false;
+    } catch (error) {
+      console.error(
+        'Lỗi khi trả sách:',
+        error
+      );
+
+      return false;
+    }
   };
 
-  /* ================= KIỂM TRA ĐÃ MƯỢN ================= */
-
-  const isBorrowed = (bookId: string) => {
-    return borrowedBookIds.includes(bookId);
-  };
+  // =====================================================
+  // CUNG CẤP DỮ LIỆU CHO CÁC MÀN HÌNH
+  // =====================================================
 
   return (
     <LibraryContext.Provider
       value={{
         books,
-        borrowedBookIds,
+        borrowRecords,
+        loading,
         borrowBook,
         returnBook,
         isBorrowed,
@@ -173,6 +374,10 @@ export function LibraryProvider({
     </LibraryContext.Provider>
   );
 }
+
+// =====================================================
+// HOOK SỬ DỤNG CONTEXT
+// =====================================================
 
 export function useLibrary() {
   const context = useContext(LibraryContext);
