@@ -16,6 +16,8 @@ import {
 
 import { get, ref } from 'firebase/database';
 
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
 import { auth, db } from '../config/firebase';
 import { LibraryProvider } from '../context/LibraryContext';
 
@@ -63,85 +65,89 @@ export default function RootLayout() {
 
   if (checkingAuth) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator
-          size="large"
-          color="#1E6FD9"
-        />
+      <SafeAreaProvider>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator
+            size="large"
+            color="#1E6FD9"
+          />
 
-        <Text style={styles.loadingText}>
-          Đang kiểm tra phiên đăng nhập...
-        </Text>
-      </View>
+          <Text style={styles.loadingText}>
+            Đang kiểm tra phiên đăng nhập...
+          </Text>
+        </View>
+      </SafeAreaProvider>
     );
   }
 
   return (
-    <LibraryProvider>
-      <Stack
-        screenOptions={{
-          headerShown: true,
-          headerTitleAlign: 'center',
-          headerBackTitle: 'Quay lại',
-        }}
-      >
-        <Stack.Screen
-          name="index"
-          options={{
-            headerShown: false,
+    <SafeAreaProvider>
+      <LibraryProvider>
+        <Stack
+          screenOptions={{
+            headerShown: true,
+            headerTitleAlign: 'center',
+            headerBackTitle: 'Quay lại',
           }}
-        />
+        >
+          <Stack.Screen
+            name="index"
+            options={{
+              headerShown: false,
+            }}
+          />
 
-        <Stack.Screen
-          name="register"
-          options={{
-            title: 'Đăng ký',
-          }}
-        />
+          <Stack.Screen
+            name="register"
+            options={{
+              title: 'Đăng ký',
+            }}
+          />
 
-        <Stack.Screen
-          name="home"
-          options={{
-            title: 'Trang chủ',
-          }}
-        />
+          <Stack.Screen
+            name="home"
+            options={{
+              title: 'Trang chủ',
+            }}
+          />
 
-        <Stack.Screen
-          name="books"
-          options={{
-            title: 'Tìm kiếm sách',
-          }}
-        />
+          <Stack.Screen
+            name="books"
+            options={{
+              title: 'Tìm kiếm sách',
+            }}
+          />
 
-        <Stack.Screen
-          name="book-detail"
-          options={{
-            title: 'Chi tiết sách',
-          }}
-        />
+          <Stack.Screen
+            name="book-detail"
+            options={{
+              title: 'Chi tiết sách',
+            }}
+          />
 
-        <Stack.Screen
-          name="borrow-history"
-          options={{
-            title: 'Lịch sử mượn sách',
-          }}
-        />
+          <Stack.Screen
+            name="borrow-history"
+            options={{
+              title: 'Lịch sử mượn sách',
+            }}
+          />
 
-        <Stack.Screen
-          name="librarian"
-          options={{
-            title: 'Quản lý thư viện',
-          }}
-        />
+          <Stack.Screen
+            name="librarian"
+            options={{
+              title: 'Quản lý thư viện',
+            }}
+          />
 
-        <Stack.Screen
-          name="scan-book"
-          options={{
-            title: 'Quét mã vạch',
-          }}
-        />
-      </Stack>
-    </LibraryProvider>
+          <Stack.Screen
+            name="scan-book"
+            options={{
+              title: 'Quét mã vạch',
+            }}
+          />
+        </Stack>
+      </LibraryProvider>
+    </SafeAreaProvider>
   );
 }
 

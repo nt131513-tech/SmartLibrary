@@ -1,0 +1,327 @@
+SMARTLIBRARY – HƯỚNG DẪN CÀI ĐẶT VÀ CHẠY ỨNG DỤNG
+========================================================
+
+Mục đích:
+- Cài đặt môi trường cần thiết để chạy ứng dụng SmartLibrary.
+- Chạy ứng dụng React Native bằng Expo.
+- Không bao gồm các lệnh nhập dữ liệu lên Firebase.
+- Không bao gồm các lệnh Git/GitHub.
+
+Lưu ý:
+- Các lệnh dưới đây dành cho Windows PowerShell.
+- Hãy mở PowerShell hoặc Terminal tại thư mục dự án SmartLibrary.
+- Nếu máy đã cài sẵn Node.js, Git và Expo thì có thể bỏ qua bước tương ứng.
+
+--------------------------------------------------------
+1. KIỂM TRA MÔI TRƯỜNG
+--------------------------------------------------------
+
+Kiểm tra Node.js:
+
+node -v
+
+Kiểm tra npm:
+
+npm -v
+
+Kiểm tra Git:
+
+git --version
+
+Kiểm tra Expo CLI thông qua npx:
+
+npx expo --version
+
+
+--------------------------------------------------------
+2. CÀI ĐẶT NODE.JS
+--------------------------------------------------------
+
+Nếu chưa có Node.js:
+- Truy cập https://nodejs.org/
+- Cài bản LTS.
+- Đóng và mở lại PowerShell sau khi cài.
+
+Kiểm tra lại:
+
+node -v
+npm -v
+
+
+--------------------------------------------------------
+3. MỞ THƯ MỤC DỰ ÁN
+--------------------------------------------------------
+
+Di chuyển đến thư mục dự án:
+
+cd "D:\VS_code\di_dong\SmartLibrary"
+
+Kiểm tra các tệp trong thư mục:
+
+dir
+
+Kiểm tra tệp package.json:
+
+type package.json
+
+
+--------------------------------------------------------
+4. CÀI ĐẶT CÁC PACKAGE CỦA DỰ ÁN
+--------------------------------------------------------
+
+Cài toàn bộ thư viện được khai báo trong package.json:
+
+npm install
+
+Nếu dự án sử dụng Expo Router, có thể cài các package tương thích bằng lệnh:
+
+npx expo install expo-router react-native-safe-area-context react-native-screens expo-linking expo-constants expo-status-bar
+
+Nếu dự án sử dụng Firebase:
+
+npm install firebase
+
+Nếu dự án có chức năng quét mã sách bằng camera:
+
+npx expo install expo-camera
+
+Nếu dự án sử dụng biểu tượng:
+
+npx expo install @expo/vector-icons
+
+
+Lưu ý:
+- Chỉ chạy các lệnh cài bổ sung nếu package đó chưa có trong package.json.
+- Không nên cài lại tất cả package nếu npm install đã chạy thành công.
+
+
+--------------------------------------------------------
+5. KIỂM TRA CẤU TRÚC DỰ ÁN
+--------------------------------------------------------
+
+Cấu trúc cơ bản dự kiến:
+
+SmartLibrary/
+|-- package.json
+|-- package-lock.json
+|-- app.json hoặc app.config.js/ts
+|-- src/
+|   |-- app/
+|   |   |-- _layout.tsx
+|   |   |-- index.tsx
+|   |   |-- home.tsx
+|   |   |-- register.tsx
+|   |   |-- books.tsx
+|   |   |-- book-detail.tsx
+|   |   |-- borrow-history.tsx
+|   |   |-- librarian.tsx
+|   |   |-- scan-book.tsx
+|   |-- config/
+|       |-- firebase.ts
+|   |-- context/
+|       |-- LibraryContext.tsx
+|-- assets/
+
+
+--------------------------------------------------------
+6. CHẠY ỨNG DỤNG SMARTLIBRARY
+--------------------------------------------------------
+
+Lệnh chạy Expo:
+
+npx expo start
+
+Sau khi chạy:
+- Quét mã QR bằng ứng dụng Expo Go trên điện thoại.
+- Hoặc nhấn 'a' để mở Android Emulator nếu đã cài trình giả lập.
+- Nhấn 'w' để mở phiên bản web nếu dự án hỗ trợ.
+- Nhấn 'r' để reload ứng dụng.
+- Nhấn 'm' để mở/đóng menu Developer.
+
+Nếu điện thoại không kết nối được cùng mạng:
+
+npx expo start --tunnel
+
+Nếu muốn chạy bằng LAN:
+
+npx expo start --lan
+
+Nếu muốn chạy bằng localhost:
+
+npx expo start --localhost
+
+
+--------------------------------------------------------
+7. XỬ LÝ LỖI CACHE EXPO
+--------------------------------------------------------
+
+Nếu ứng dụng không cập nhật giao diện hoặc Metro bị lỗi:
+
+npx expo start -c
+
+Hoặc:
+
+npx expo start --clear
+
+
+--------------------------------------------------------
+8. KIỂM TRA VÀ SỬA LỖI DỰ ÁN
+--------------------------------------------------------
+
+Kiểm tra vấn đề tương thích Expo:
+
+npx expo-doctor
+
+Tự động sửa một số package không tương thích:
+
+npx expo install --fix
+
+Kiểm tra TypeScript:
+
+npx tsc --noEmit
+
+
+--------------------------------------------------------
+9. XỬ LÝ LỖI NODE_MODULES
+--------------------------------------------------------
+
+Nếu npm install bị lỗi hoặc package bị hỏng:
+
+Xóa thư mục node_modules:
+
+Remove-Item -Recurse -Force node_modules
+
+Xóa package-lock.json nếu thật sự cần tạo lại dependency lock:
+
+Remove-Item -Force package-lock.json
+
+Cài lại thư viện:
+
+npm install
+
+Sau đó chạy lại:
+
+npx expo start -c
+
+Lưu ý:
+- Không xóa package-lock.json nếu không cần thiết.
+- Chỉ dùng bước này khi cách cài đặt thông thường không giải quyết được lỗi.
+
+
+--------------------------------------------------------
+10. XỬ LÝ LỖI POWERSHELL KHÔNG CHẠY ĐƯỢC NPM
+--------------------------------------------------------
+
+Nếu gặp lỗi liên quan đến Execution Policy hoặc npm.ps1:
+
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+
+Chọn 'Y' nếu PowerShell yêu cầu xác nhận.
+
+Sau đó đóng và mở lại Terminal.
+
+
+--------------------------------------------------------
+11. CHẠY ỨNG DỤNG TRÊN ĐIỆN THOẠI
+--------------------------------------------------------
+
+Quy trình đề xuất:
+
+Bước 1:
+cd "D:\VS_code\di_dong\SmartLibrary"
+
+Bước 2:
+npm install
+
+Bước 3:
+npx expo start --tunnel
+
+Bước 4:
+- Mở Expo Go trên điện thoại.
+- Quét mã QR hiển thị trong Terminal hoặc trình duyệt.
+- Chờ ứng dụng được bundling.
+
+Nếu ứng dụng báo lỗi khi mở:
+- Kiểm tra điện thoại có Internet.
+- Kiểm tra Terminal có báo lỗi hay không.
+- Chạy lại bằng:
+
+npx expo start -c --tunnel
+
+
+--------------------------------------------------------
+12. QUY TRÌNH CHẠY ỨNG DỤNG HẰNG NGÀY
+--------------------------------------------------------
+
+Chỉ cần thực hiện:
+
+cd "D:\VS_code\di_dong\SmartLibrary"
+
+npx expo start
+
+Nếu không kết nối được với điện thoại:
+
+npx expo start --tunnel
+
+Không cần chạy lại npm install mỗi ngày, trừ khi:
+- package.json thay đổi;
+- cài thêm thư viện;
+- xóa thư mục node_modules;
+- chuyển sang máy tính khác.
+
+
+--------------------------------------------------------
+13. CÁC LỆNH KHÔNG CẦN THỰC HIỆN KHI CHỈ CHẠY APP
+--------------------------------------------------------
+
+Không cần chạy các lệnh sau nếu chỉ muốn mở ứng dụng:
+- Các lệnh nhập dữ liệu Excel/JSON lên Firebase.
+- Các script import dữ liệu.
+- Các lệnh tạo dữ liệu giả lập.
+- Các lệnh git add, git commit, git pull, git push.
+- Các lệnh triển khai server hoặc build firmware phần cứng.
+
+
+--------------------------------------------------------
+14. LƯU Ý VỀ FIREBASE
+--------------------------------------------------------
+
+Ứng dụng có thể cần tệp cấu hình:
+
+src/config/firebase.ts
+
+Hãy kiểm tra:
+- Thông tin cấu hình Firebase đã được khai báo đúng.
+- Tên project Firebase chính xác.
+- Các dịch vụ cần thiết đã được bật.
+- Quy tắc bảo mật Firebase cho phép thao tác phù hợp.
+
+Không chia sẻ công khai:
+- Firebase service account JSON.
+- Private key.
+- Access token.
+- Mật khẩu.
+- Thông tin bí mật không cần thiết cho ứng dụng.
+
+
+--------------------------------------------------------
+15. LỆNH NHANH NHẤT ĐỂ CHẠY APP
+--------------------------------------------------------
+
+cd "D:\VS_code\di_dong\SmartLibrary"
+
+npm install
+
+npx expo start --tunnel
+
+
+Khi đã cài đặt đầy đủ từ trước, chỉ cần:
+
+cd "D:\VS_code\di_dong\SmartLibrary"
+
+npx expo start
+
+
+========================================================
+KẾT THÚC
+========================================================

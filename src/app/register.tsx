@@ -25,6 +25,7 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState<'user' | 'librarian'>('user');
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] =
@@ -86,16 +87,18 @@ export default function RegisterScreen() {
         uid: user.uid,
         fullName: fullName.trim(),
         email: user.email,
-        role: 'user',
+        role: role,
         createdAt: new Date().toISOString(),
       });
 
       Alert.alert(
         'Đăng ký thành công',
-        'Tài khoản của bạn đã được tạo.',
+        role === 'librarian'
+          ? 'Tài khoản Quản thư (Thủ thư) đã được tạo thành công!'
+          : 'Tài khoản Độc giả của bạn đã được tạo.',
         [
           {
-            text: 'Đăng nhập',
+            text: 'Đăng nhập ngay',
             onPress: () => router.replace('/'),
           },
         ],
@@ -139,6 +142,45 @@ export default function RegisterScreen() {
       </View>
 
       <View style={styles.form}>
+        {/* TAB CHỌN LOẠI TÀI KHOẢN ĐĂNG KÝ */}
+        <View style={styles.roleTabContainer}>
+          <TouchableOpacity
+            style={[
+              styles.roleTab,
+              role === 'user' && styles.roleTabActive,
+            ]}
+            onPress={() => setRole('user')}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={[
+                styles.roleTabText,
+                role === 'user' && styles.roleTabTextActive,
+              ]}
+            >
+              👤 Độc Giả
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.roleTab,
+              role === 'librarian' && styles.roleTabActive,
+            ]}
+            onPress={() => setRole('librarian')}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={[
+                styles.roleTabText,
+                role === 'librarian' && styles.roleTabTextActive,
+              ]}
+            >
+              🛡️ Quản Thư (Admin)
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         <Text style={styles.label}>
           Họ và tên
         </Text>
@@ -221,6 +263,7 @@ export default function RegisterScreen() {
         <TouchableOpacity
           style={[
             styles.registerButton,
+            role === 'librarian' && styles.librarianRegisterButton,
             loading && styles.disabledButton,
           ]}
           activeOpacity={0.8}
@@ -231,7 +274,9 @@ export default function RegisterScreen() {
             <ActivityIndicator color="#FFFFFF" />
           ) : (
             <Text style={styles.registerButtonText}>
-              ĐĂNG KÝ
+              {role === 'librarian'
+                ? 'ĐĂNG KÝ TÀI KHOẢN QUẢN THƯ'
+                : 'ĐĂNG KÝ TÀI KHOẢN ĐỘC GIẢ'}
             </Text>
           )}
         </TouchableOpacity>
@@ -331,6 +376,40 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
+  roleTabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#E2E8F0',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 8,
+  },
+
+  roleTab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+
+  roleTabActive: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+
+  roleTabText: {
+    fontSize: 14,
+    color: '#64748B',
+    fontWeight: '600',
+  },
+
+  roleTabTextActive: {
+    color: '#1E6FD9',
+    fontWeight: 'bold',
+  },
+
   registerButton: {
     height: 52,
     backgroundColor: '#1E6FD9',
@@ -338,6 +417,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 25,
+  },
+
+  librarianRegisterButton: {
+    backgroundColor: '#1E3A8A',
   },
 
   disabledButton: {

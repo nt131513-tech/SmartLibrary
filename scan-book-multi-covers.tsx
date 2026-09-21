@@ -18,8 +18,10 @@ import { useLibrary } from "../context/LibraryContext";
 
 // Ảnh bìa sách book01 trong thư mục assets
 const bookCoverImages: Record<string, any> = {
-  book09: require("../../assets/images/book09.png"),
-
+  book01: require("../../assets/images/book01.png"),
+  book02: require("../../assets/images/book02.png"),
+  book03: require("../../assets/images/book03.png"),
+  book04: require("../../assets/images/book04.png"),
 };
 
 export default function ScanBookScreen() {

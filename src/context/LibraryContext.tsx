@@ -6,6 +6,7 @@ import {
   useState,
 } from 'react';
 
+import { onAuthStateChanged } from 'firebase/auth';
 import {
   get,
   onValue,
@@ -35,6 +36,7 @@ export type BorrowRecord = {
   id: string;
   userId: string;
   bookId: string;
+  quantity?: number;
   borrowedAt: number;
   dueDate: number;
   returnedAt?: number | null;
@@ -45,29 +47,19 @@ type LibraryContextType = {
   books: Book[];
   borrowRecords: BorrowRecord[];
   loading: boolean;
-  borrowBook: (bookId: string) => Promise<boolean>;
-  returnBook: (bookId: string) => Promise<boolean>;
-  isBorrowed: (bookId: string) => boolean;
+  borrowBook: (bookId: string, quantity: number) => Promise<boolean>;
+  returnBook: (bookId: string, quantity: number) => Promise<boolean>;
+  getBorrowedQuantity: (bookId: string) => number;
 };
 
-const LibraryContext = createContext<
-  LibraryContextType | undefined
->(undefined);
+const LibraryContext = createContext<LibraryContextType | undefined>(
+  undefined
+);
 
-export function LibraryProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export function LibraryProvider({ children }: { children: ReactNode }) {
   const [books, setBooks] = useState<Book[]>([]);
-  const [borrowRecords, setBorrowRecords] = useState<
-    BorrowRecord[]
-  >([]);
+  const [borrowRecords, setBorrowRecords] = useState<BorrowRecord[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // =====================================================
-  // TẢI DANH SÁCH SÁCH TỪ FIREBASE
-  // =====================================================
 
   useEffect(() => {
     const booksRef = ref(db, 'books');
@@ -83,44 +75,32 @@ export function LibraryProvider({
           return;
         }
 
-        const bookList: Book[] = Object.entries(data).map(
-          ([id, value]) => {
-            const book = value as Partial<Book>;
+        const bookList: Book[] = Object.entries(data).map(([id, value]) => {
+          const book = value as Partial<Book>;
+          const quantity = Number(book.quantity ?? 0);
+          const totalQuantity = Number(book.totalQuantity ?? quantity);
 
-            const quantity = Number(book.quantity ?? 0);
-
-            const totalQuantity = Number(
-              book.totalQuantity ?? quantity
-            );
-
-            return {
-              id,
-              title: String(book.title ?? ''),
-              author: String(book.author ?? ''),
-              category: String(book.category ?? ''),
-              isbn: String(book.isbn ?? ''),
-              shelf: String(book.shelf ?? ''),
-              quantity,
-              totalQuantity,
-              available: quantity > 0,
-              description: String(
-                book.description ?? ''
-              ),
-              barcode: String(book.barcode ?? ''),
-              coverImage: String(book.coverImage ?? ''),
-            };
-          }
-        );
+          return {
+            id,
+            title: String(book.title ?? ''),
+            author: String(book.author ?? ''),
+            category: String(book.category ?? ''),
+            isbn: String(book.isbn ?? ''),
+            shelf: String(book.shelf ?? ''),
+            quantity,
+            totalQuantity,
+            available: quantity > 0,
+            description: String(book.description ?? ''),
+            barcode: String(book.barcode ?? ''),
+            coverImage: String(book.coverImage ?? ''),
+          };
+        });
 
         setBooks(bookList);
         setLoading(false);
       },
       (error) => {
-        console.error(
-          'Lỗi tải danh sách sách:',
-          error
-        );
-
+        console.error('Lỗi tải danh sách sách:', error);
         setLoading(false);
       }
     );
@@ -128,90 +108,70 @@ export function LibraryProvider({
     return () => unsubscribe();
   }, []);
 
-  // =====================================================
-  // TẢI LỊCH SỬ MƯỢN SÁCH CỦA TÀI KHOẢN HIỆN TẠI
-  // =====================================================
-
   useEffect(() => {
-    const currentUser = auth.currentUser;
+    let unsubscribeRecords: (() => void) | undefined;
 
-    if (!currentUser) {
-      setBorrowRecords([]);
-      return;
-    }
-
-    const recordsRef = ref(db, 'borrowRecords');
-
-    const unsubscribe = onValue(
-      recordsRef,
-      (snapshot) => {
-        const data = snapshot.val();
-
-        if (!data) {
-          setBorrowRecords([]);
-          return;
-        }
-
-        const records: BorrowRecord[] = Object.entries(
-          data
-        )
-          .map(([id, value]) => {
-            const record = value as Omit<
-              BorrowRecord,
-              'id'
-            >;
-
-            return {
-              id,
-              ...record,
-            };
-          })
-          .filter(
-            (record) =>
-              record.userId === currentUser.uid
-          )
-          .sort(
-            (a, b) => b.borrowedAt - a.borrowedAt
-          );
-
-        setBorrowRecords(records);
-      },
-      (error) => {
-        console.error(
-          'Lỗi tải lịch sử mượn sách:',
-          error
-        );
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      if (unsubscribeRecords) {
+        unsubscribeRecords();
+        unsubscribeRecords = undefined;
       }
-    );
 
-    return () => unsubscribe();
+      if (!currentUser) {
+        setBorrowRecords([]);
+        return;
+      }
+
+      const recordsRef = ref(db, 'borrowRecords');
+
+      unsubscribeRecords = onValue(
+        recordsRef,
+        (snapshot) => {
+          const data = snapshot.val();
+
+          if (!data) {
+            setBorrowRecords([]);
+            return;
+          }
+
+          const records: BorrowRecord[] = Object.entries(data)
+            .map(([id, value]) => {
+              const record = value as Omit<BorrowRecord, 'id'>;
+              return {
+                id,
+                ...record,
+                quantity: Number(record.quantity ?? 1),
+              };
+            })
+            .filter((record) => record.userId === currentUser.uid)
+            .sort((a, b) => b.borrowedAt - a.borrowedAt);
+
+          setBorrowRecords(records);
+        },
+        (error) => {
+          console.error('Lỗi tải lịch sử mượn sách:', error);
+        }
+      );
+    });
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeRecords) unsubscribeRecords();
+    };
   }, []);
 
-  // =====================================================
-  // KIỂM TRA SÁCH CÓ ĐANG ĐƯỢC NGƯỜI DÙNG MƯỢN KHÔNG
-  // =====================================================
-
-  const isBorrowed = (bookId: string): boolean => {
-    const currentUser = auth.currentUser;
-
-    if (!currentUser) {
-      return false;
-    }
-
-    return borrowRecords.some(
-      (record) =>
-        record.userId === currentUser.uid &&
-        record.bookId === bookId &&
-        record.status === 'borrowed'
-    );
+  const getBorrowedQuantity = (bookId: string): number => {
+    return borrowRecords
+      .filter(
+        (record) =>
+          record.bookId === bookId && record.status === 'borrowed'
+      )
+      .reduce((total, record) => total + Number(record.quantity ?? 1), 0);
   };
-
-  // =====================================================
-  // MƯỢN SÁCH
-  // =====================================================
 
   const borrowBook = async (
-    bookId: string
+    bookId: string,
+    quantity: number
   ): Promise<boolean> => {
     const currentUser = auth.currentUser;
 
@@ -220,72 +180,64 @@ export function LibraryProvider({
       return false;
     }
 
-    const book = books.find(
-      (item) => item.id === bookId
-    );
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      console.log('Số lượng mượn không hợp lệ');
+      return false;
+    }
+
+    const book = books.find((item) => item.id === bookId);
 
     if (!book) {
       console.log('Không tìm thấy sách');
       return false;
     }
 
-    if (book.quantity <= 0) {
-      console.log('Sách đã hết');
+    if (book.quantity < quantity) {
+      console.log('Số lượng sách trong kho không đủ');
       return false;
     }
 
-    // Không cho mượn cùng một cuốn sách nhiều lần
-    if (isBorrowed(bookId)) {
-      console.log('Bạn đang mượn sách này');
+    const borrowedQuantity = getBorrowedQuantity(bookId);
+
+    if (borrowedQuantity + quantity > book.totalQuantity) {
+      console.log('Số lượng mượn vượt quá giới hạn');
       return false;
     }
 
     try {
-      const newQuantity = book.quantity - 1;
-
       const borrowedAt = Date.now();
+      const dueDateObject = new Date(borrowedAt);
+      dueDateObject.setMonth(dueDateObject.getMonth() + 3);
 
-      // Thời hạn mượn: 14 ngày
-      const dueDate =
-        borrowedAt + 14 * 24 * 60 * 60 * 1000;
+      const newQuantity = book.quantity - quantity;
 
-      // Cập nhật số lượng sách
-      await update(ref(db, `books/${bookId}`), {
-        quantity: newQuantity,
-        available: newQuantity > 0,
+      const newRecordRef = push(ref(db, 'borrowRecords'));
+
+      await update(ref(db), {
+        [`books/${bookId}/quantity`]: newQuantity,
+        [`books/${bookId}/available`]: newQuantity > 0,
+        [`borrowRecords/${newRecordRef.key}`]: {
+          userId: currentUser.uid,
+          bookId,
+          quantity,
+          borrowedAt,
+          dueDate: dueDateObject.getTime(),
+          returnedAt: null,
+          status: 'borrowed',
+        },
       });
 
-      // Tạo bản ghi lịch sử mượn
-      const newRecordRef = push(
-        ref(db, 'borrowRecords')
-      );
-
-      await update(newRecordRef, {
-        userId: currentUser.uid,
-        bookId,
-        borrowedAt,
-        dueDate,
-        returnedAt: null,
-        status: 'borrowed',
-      });
-
+      console.log('Mượn sách thành công');
       return true;
     } catch (error) {
-      console.error(
-        'Lỗi khi mượn sách:',
-        error
-      );
-
+      console.error('Lỗi khi mượn sách:', error);
       return false;
     }
   };
 
-  // =====================================================
-  // TRẢ SÁCH
-  // =====================================================
-
   const returnBook = async (
-    bookId: string
+    bookId: string,
+    quantity: number
   ): Promise<boolean> => {
     const currentUser = auth.currentUser;
 
@@ -294,70 +246,90 @@ export function LibraryProvider({
       return false;
     }
 
-    const book = books.find(
-      (item) => item.id === bookId
-    );
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      console.log('Số lượng trả không hợp lệ');
+      return false;
+    }
 
+    const book = books.find((item) => item.id === bookId);
     if (!book) {
       console.log('Không tìm thấy sách');
       return false;
     }
 
+    const borrowedQuantity = getBorrowedQuantity(bookId);
+
+    if (quantity > borrowedQuantity) {
+      console.log('Số lượng trả vượt quá số lượng đang mượn');
+      return false;
+    }
+
     try {
-      const newQuantity = Math.min(
-        book.quantity + 1,
-        book.totalQuantity
-      );
+      const recordsSnapshot = await get(ref(db, 'borrowRecords'));
 
-      // Cập nhật số lượng sách
-      await update(ref(db, `books/${bookId}`), {
-        quantity: newQuantity,
-        available: newQuantity > 0,
-      });
+      if (!recordsSnapshot.exists()) {
+        return false;
+      }
 
-      // Lấy toàn bộ lịch sử mượn
-      const recordsSnapshot = await get(
-        ref(db, 'borrowRecords')
-      );
+      const records = recordsSnapshot.val();
+      let remainingToReturn = quantity;
+      const changes: Record<string, unknown> = {};
 
-      if (recordsSnapshot.exists()) {
-        const records = recordsSnapshot.val();
-
-        for (const recordId of Object.keys(records)) {
-          const record = records[recordId];
-
-          if (
+      const activeRecords = Object.entries(records)
+        .map(([recordId, value]) => ({
+          recordId,
+          record: value as Omit<BorrowRecord, 'id'>,
+        }))
+        .filter(
+          ({ record }) =>
             record.userId === currentUser.uid &&
             record.bookId === bookId &&
             record.status === 'borrowed'
-          ) {
-            await update(
-              ref(db, `borrowRecords/${recordId}`),
-              {
-                status: 'returned',
-                returnedAt: Date.now(),
-              }
-            );
+        )
+        .sort((a, b) => a.record.borrowedAt - b.record.borrowedAt);
 
-            return true;
-          }
+      for (const { recordId, record } of activeRecords) {
+        if (remainingToReturn <= 0) break;
+
+        const recordQuantity = Number(record.quantity ?? 1);
+        const returnedFromRecord = Math.min(
+          recordQuantity,
+          remainingToReturn
+        );
+        const leftInRecord = recordQuantity - returnedFromRecord;
+
+        if (leftInRecord === 0) {
+          changes[`borrowRecords/${recordId}/status`] = 'returned';
+          changes[`borrowRecords/${recordId}/returnedAt`] = Date.now();
+          changes[`borrowRecords/${recordId}/quantity`] = recordQuantity;
+        } else {
+          changes[`borrowRecords/${recordId}/quantity`] = leftInRecord;
         }
+
+        remainingToReturn -= returnedFromRecord;
       }
 
-      return false;
-    } catch (error) {
-      console.error(
-        'Lỗi khi trả sách:',
-        error
+      if (remainingToReturn > 0) {
+        return false;
+      }
+
+      const newQuantity = Math.min(
+        book.quantity + quantity,
+        book.totalQuantity
       );
 
+      changes[`books/${bookId}/quantity`] = newQuantity;
+      changes[`books/${bookId}/available`] = newQuantity > 0;
+
+      await update(ref(db), changes);
+
+      console.log('Trả sách thành công');
+      return true;
+    } catch (error) {
+      console.error('Lỗi khi trả sách:', error);
       return false;
     }
   };
-
-  // =====================================================
-  // CUNG CẤP DỮ LIỆU CHO CÁC MÀN HÌNH
-  // =====================================================
 
   return (
     <LibraryContext.Provider
@@ -367,17 +339,13 @@ export function LibraryProvider({
         loading,
         borrowBook,
         returnBook,
-        isBorrowed,
+        getBorrowedQuantity,
       }}
     >
       {children}
     </LibraryContext.Provider>
   );
 }
-
-// =====================================================
-// HOOK SỬ DỤNG CONTEXT
-// =====================================================
 
 export function useLibrary() {
   const context = useContext(LibraryContext);

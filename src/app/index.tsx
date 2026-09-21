@@ -29,6 +29,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loginRole, setLoginRole] = useState<'user' | 'librarian'>('user');
 
   /* ================= ĐĂNG NHẬP ================= */
 
@@ -72,8 +73,28 @@ export default function LoginScreen() {
 
       const userData = userSnapshot.val();
 
+      // Kiểm tra tài khoản có bị khóa hay không
+      if (userData.isLocked) {
+        await signOut(auth);
+        Alert.alert(
+          'Tài khoản bị khóa',
+          'Tài khoản của bạn đã bị khóa bởi Quản thư. Vui lòng liên hệ để được hỗ trợ.',
+        );
+        return;
+      }
+
       // 3. Lấy vai trò tài khoản
       const role = userData.role;
+
+      // Kiểm tra chọn vai trò không khớp
+      if (loginRole === 'librarian' && role !== 'librarian') {
+        await signOut(auth);
+        Alert.alert(
+          'Lỗi phân quyền',
+          'Tài khoản của bạn là Độc giả, không thể đăng nhập giao diện Quản thư.',
+        );
+        return;
+      }
 
       // 4. Chuyển giao diện theo vai trò
       if (role === 'user') {
@@ -192,12 +213,51 @@ export default function LoginScreen() {
       </View>
 
       <View style={styles.form}>
+        {/* TAB CHỌN LOẠI TÀI KHOẢN ĐĂNG NHẬP */}
+        <View style={styles.roleTabContainer}>
+          <TouchableOpacity
+            style={[
+              styles.roleTab,
+              loginRole === 'user' && styles.roleTabActive,
+            ]}
+            onPress={() => setLoginRole('user')}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={[
+                styles.roleTabText,
+                loginRole === 'user' && styles.roleTabTextActive,
+              ]}
+            >
+              👤 Độc Giả
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.roleTab,
+              loginRole === 'librarian' && styles.roleTabActive,
+            ]}
+            onPress={() => setLoginRole('librarian')}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={[
+                styles.roleTabText,
+                loginRole === 'librarian' && styles.roleTabTextActive,
+              ]}
+            >
+              🛡️ Quản Thư (Admin)
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         <Text style={styles.label}>Email</Text>
 
         <TextInput
           style={styles.input}
           placeholder="Nhập email"
-          placeholderTextColor="#301fb1"
+          placeholderTextColor="#999"
           keyboardType="email-address"
           autoCapitalize="none"
           autoCorrect={false}
@@ -242,6 +302,7 @@ export default function LoginScreen() {
         <TouchableOpacity
           style={[
             styles.loginButton,
+            loginRole === 'librarian' && styles.librarianLoginButton,
             loading && styles.disabledButton,
           ]}
           activeOpacity={0.8}
@@ -252,7 +313,9 @@ export default function LoginScreen() {
             <ActivityIndicator color="#FFFFFF" />
           ) : (
             <Text style={styles.loginText}>
-              ĐĂNG NHẬP
+              {loginRole === 'librarian'
+                ? 'ĐĂNG NHẬP QUẢN THƯ'
+                : 'ĐĂNG NHẬP ĐỘC GIẢ'}
             </Text>
           )}
         </TouchableOpacity>
@@ -372,6 +435,40 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
+  roleTabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#E2E8F0',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 10,
+  },
+
+  roleTab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+
+  roleTabActive: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+
+  roleTabText: {
+    fontSize: 14,
+    color: '#64748B',
+    fontWeight: '600',
+  },
+
+  roleTabTextActive: {
+    color: '#1E6FD9',
+    fontWeight: 'bold',
+  },
+
   loginButton: {
     height: 52,
     backgroundColor: '#1E6FD9',
@@ -379,6 +476,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 20,
+  },
+
+  librarianLoginButton: {
+    backgroundColor: '#1E3A8A',
   },
 
   disabledButton: {

@@ -10,10 +10,59 @@ import {
 
 import { router } from 'expo-router';
 import { signOut } from 'firebase/auth';
+import { useMemo } from 'react';
+import { useLibrary } from '../context/LibraryContext';
 
 import { auth } from '../config/firebase';
 
 export default function HomeScreen() {
+  const { books, borrowRecords } = useLibrary();
+
+  // Chỉ lấy các lượt mượn hiện tại của tài khoản đang đăng nhập.
+  const activeBorrowRecords = useMemo(
+    () =>
+      borrowRecords.filter(
+        (record) =>
+          record.status === 'borrowed' &&
+          record.userId === auth.currentUser?.uid
+      ),
+    [borrowRecords]
+  );
+
+  // Tổng số quyển sách người dùng đang mượn.
+  const totalBorrowedBooks = useMemo(
+    () =>
+      activeBorrowRecords.reduce(
+        (total, record) => total + Number(record.quantity ?? 1),
+        0
+      ),
+    [activeBorrowRecords]
+  );
+
+  // Gom số lượng theo từng tên sách.
+  const borrowedByBook = useMemo(() => {
+    const bookMap: Record<
+      string,
+      { title: string; quantity: number }
+    > = {};
+
+    activeBorrowRecords.forEach((record) => {
+      const book = books.find((item) => item.id === record.bookId);
+      if (!book) return;
+
+      if (!bookMap[book.id]) {
+        bookMap[book.id] = {
+          title: book.title,
+          quantity: 0,
+        };
+      }
+
+      bookMap[book.id].quantity += Number(record.quantity ?? 1);
+    });
+
+    return Object.entries(bookMap);
+  }, [activeBorrowRecords, books]);
+
   // Đăng xuất tài khoản
   const handleLogout = async () => {
     try {
@@ -45,6 +94,34 @@ export default function HomeScreen() {
         <Text style={styles.welcome}>
           Chào mừng bạn đến với thư viện
         </Text>
+      </View>
+
+      {/* Thống kê sách đang mượn */}
+      <View style={styles.borrowSummaryCard}>
+        <Text style={styles.summaryTitle}>Tổng sách đang mượn</Text>
+        <Text style={styles.totalBorrowed}>{totalBorrowedBooks}</Text>
+        <Text style={styles.summaryDescription}>quyển sách</Text>
+      </View>
+
+      <View style={styles.borrowedBooksCard}>
+        <Text style={styles.borrowedBooksTitle}>
+          Số lượng theo từng tên sách
+        </Text>
+
+        {borrowedByBook.length === 0 ? (
+          <Text style={styles.emptyBorrowedText}>
+            Bạn hiện chưa mượn sách nào.
+          </Text>
+        ) : (
+          borrowedByBook.map(([bookId, book]) => (
+            <View key={bookId} style={styles.borrowedBookRow}>
+              <Text style={styles.borrowedBookTitle}>{book.title}</Text>
+              <Text style={styles.borrowedBookQuantity}>
+                {book.quantity} quyển
+              </Text>
+            </View>
+          ))
+        )}
       </View>
 
       {/* Danh sách chức năng */}
@@ -207,6 +284,81 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1e293b',
     textAlign: 'center',
+  },
+
+  borrowSummaryCard: {
+    backgroundColor: '#dbeafe',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+
+  summaryTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1e3a8a',
+  },
+
+  totalBorrowed: {
+    fontSize: 42,
+    fontWeight: 'bold',
+    color: '#1d4ed8',
+    marginVertical: 6,
+  },
+
+  summaryDescription: {
+    fontSize: 14,
+    color: '#475569',
+  },
+
+  borrowedBooksCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 20,
+    elevation: 2,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+  },
+
+  borrowedBooksTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: 10,
+  },
+
+  borrowedBookRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+
+  borrowedBookTitle: {
+    flex: 1,
+    fontSize: 15,
+    color: '#334155',
+    marginRight: 12,
+  },
+
+  borrowedBookQuantity: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#2563eb',
+  },
+
+  emptyBorrowedText: {
+    fontSize: 14,
+    color: '#64748b',
   },
 
   menuContainer: {
