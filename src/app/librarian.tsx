@@ -20,12 +20,14 @@ import {
   AdminBook,
   AdminBorrowRecord,
   AppNotification,
+  ReaderCard,
   UserAccount,
 } from '../types/admin';
 
 // Admin Components
 import AdminBookManager from '../components/admin/AdminBookManager';
 import AdminBorrowManager from '../components/admin/AdminBorrowManager';
+import AdminCardManager from '../components/admin/AdminCardManager';
 import AdminDashboard from '../components/admin/AdminDashboard';
 import AdminNotificationManager from '../components/admin/AdminNotificationManager';
 import AdminOverdueManager from '../components/admin/AdminOverdueManager';
@@ -37,11 +39,13 @@ export type AdminTab =
   | 'dashboard'
   | 'books'
   | 'users'
+  | 'cards'
   | 'borrows'
   | 'returns'
   | 'overdue'
   | 'notifications'
   | 'stats';
+
 
 export default function LibrarianScreen() {
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
@@ -52,6 +56,7 @@ export default function LibrarianScreen() {
   const [borrowRecords, setBorrowRecords] = useState<AdminBorrowRecord[]>([]);
   const [users, setUsers] = useState<UserAccount[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [readerCards, setReaderCards] = useState<ReaderCard[]>([]);
 
   // =====================================================
   // LISTEN TO FIREBASE REALTIME DATABASE
@@ -127,7 +132,6 @@ export default function LibrarianScreen() {
       const data = snapshot.val();
       if (!data) {
         setNotifications([]);
-        setLoading(false);
         return;
       }
       const list: AppNotification[] = Object.entries(data)
@@ -143,6 +147,33 @@ export default function LibrarianScreen() {
         .sort((a, b) => b.createdAt - a.createdAt);
 
       setNotifications(list);
+    });
+
+    // 5. Reader Cards listener
+    const cardsRef = ref(db, 'readerCards');
+    const unsubCards = onValue(cardsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data) {
+        setReaderCards([]);
+        setLoading(false);
+        return;
+      }
+      const list: ReaderCard[] = Object.entries(data).map(([id, value]: [string, any]) => ({
+        id,
+        cardNumber: value.cardNumber || '',
+        userId: value.userId || '',
+        userEmail: value.userEmail || '',
+        fullName: value.fullName || '',
+        phone: value.phone || '',
+        readerType: value.readerType || 'student',
+        issueDate: Number(value.issueDate || 0),
+        expiryDate: Number(value.expiryDate || 0),
+        status: value.status || 'active',
+        notes: value.notes || '',
+        createdAt: Number(value.createdAt || 0),
+      })).sort((a, b) => b.createdAt - a.createdAt);
+
+      setReaderCards(list);
       setLoading(false);
     });
 
@@ -153,8 +184,10 @@ export default function LibrarianScreen() {
       unsubRecords();
       unsubUsers();
       unsubNotifs();
+      unsubCards();
     };
   }, []);
+
 
   // =====================================================
   // LOGOUT
@@ -261,6 +294,22 @@ export default function LibrarianScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
+            style={[styles.tabItem, activeTab === 'cards' && styles.tabActive]}
+            onPress={() => setActiveTab('cards')}
+          >
+            <Ionicons
+              name="card-outline"
+              size={16}
+              color={activeTab === 'cards' ? '#1E6FD9' : '#64748B'}
+            />
+            <Text
+              style={[styles.tabText, activeTab === 'cards' && styles.tabTextActive]}
+            >
+              Thẻ Độc Giả
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
             style={[styles.tabItem, activeTab === 'borrows' && styles.tabActive]}
             onPress={() => setActiveTab('borrows')}
           >
@@ -356,6 +405,10 @@ export default function LibrarianScreen() {
         {activeTab === 'books' && <AdminBookManager books={books} />}
 
         {activeTab === 'users' && <AdminUserManager users={users} />}
+
+        {activeTab === 'cards' && (
+          <AdminCardManager users={users} readerCards={readerCards} />
+        )}
 
         {activeTab === 'borrows' && (
           <AdminBorrowManager

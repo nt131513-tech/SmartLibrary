@@ -25,8 +25,13 @@ import { get, ref } from 'firebase/database';
 import { auth, db } from '../config/firebase';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const demoAccounts = {
+    user: { email: 'test123@gmail.com', password: 'abcdef123' },
+    librarian: { email: 'librarian@example.com', password: 'librarian123' },
+  };
+
+  const [email, setEmail] = useState(demoAccounts.user.email);
+  const [password, setPassword] = useState(demoAccounts.user.password);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loginRole, setLoginRole] = useState<'user' | 'librarian'>('user');
@@ -220,7 +225,11 @@ export default function LoginScreen() {
               styles.roleTab,
               loginRole === 'user' && styles.roleTabActive,
             ]}
-            onPress={() => setLoginRole('user')}
+            onPress={() => {
+              setLoginRole('user');
+              setEmail(demoAccounts.user.email);
+              setPassword(demoAccounts.user.password);
+            }}
             activeOpacity={0.8}
           >
             <Text
@@ -238,7 +247,11 @@ export default function LoginScreen() {
               styles.roleTab,
               loginRole === 'librarian' && styles.roleTabActive,
             ]}
-            onPress={() => setLoginRole('librarian')}
+            onPress={() => {
+              setLoginRole('librarian');
+              setEmail(demoAccounts.librarian.email);
+              setPassword(demoAccounts.librarian.password);
+            }}
             activeOpacity={0.8}
           >
             <Text

@@ -1,7 +1,7 @@
-
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   StyleSheet,
   Text,
   TextInput,
@@ -12,7 +12,14 @@ import {
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useLibrary } from '../context/LibraryContext';
+const bookCoverImages: Record<string, any> = {
+  book09: require("../../assets/images/book09.png"),
 
+  // Sau này thêm các sách khác:
+  // book01: require("../../assets/images/book01.png"),
+  // book02: require("../../assets/images/book02.png"),
+  // book03: require("../../assets/images/book03.png"),
+};
 export default function BooksScreen() {
   const [search, setSearch] = useState('');
 
@@ -110,10 +117,18 @@ export default function BooksScreen() {
               })
             }
           >
-            {/* BOOK ICON */}
-            <View style={styles.bookIconContainer}>
-              <Text style={styles.bookIcon}>📖</Text>
-            </View>
+            {/* BOOK COVER */}
+              <View style={styles.bookIconContainer}>
+                {bookCoverImages[item.id] ? (
+                  <Image
+                    source={bookCoverImages[item.id]}
+                    style={styles.bookCover}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Text style={styles.bookIcon}>📖</Text>
+                )}
+              </View>
 
             {/* BOOK INFORMATION */}
             <View style={styles.bookInfo}>
@@ -185,8 +200,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
     paddingHorizontal: 16,
   },
-
+  bookCover: {
+  width: '100%',
+  height: '100%',
+  borderRadius: 10,
+},
   loadingContainer: {
+
+
+    
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',

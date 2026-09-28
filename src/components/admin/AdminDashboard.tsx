@@ -142,6 +142,17 @@ export default function AdminDashboard({
 
         <TouchableOpacity
           style={styles.menuItem}
+          onPress={() => onNavigateTab('cards')}
+        >
+          <View style={[styles.menuIcon, { backgroundColor: '#EFF6FF' }]}>
+            <Ionicons name="card-outline" size={22} color="#0284C7" />
+          </View>
+          <Text style={styles.menuText}>Thêm Thẻ Độc Giả</Text>
+        </TouchableOpacity>
+
+
+        <TouchableOpacity
+          style={styles.menuItem}
           onPress={() => onNavigateTab('borrows')}
         >
           <View style={[styles.menuIcon, { backgroundColor: '#FEF3C7' }]}>
