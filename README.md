@@ -447,6 +447,10 @@ Không đưa thông tin bí mật hoặc credential nhạy cảm trực tiếp l
 
 ---
 
+# 🏗️ Kiến trúc AI tích hợp (dự kiến)
+
+![Kiến trúc Smart Library](docs/images/Mô_hình_AI_đề_xuất_sách_cho_Smart_Library.png)
+---
 # 📄 Tài liệu
 
 Các tài liệu, sơ đồ kiến trúc và hình ảnh minh họa được đặt trong thư mục:
