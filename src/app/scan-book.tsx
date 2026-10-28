@@ -1,8 +1,8 @@
 import { useState } from "react";
+
 import {
   ActivityIndicator,
   Alert,
-  Image,
   Modal,
   StyleSheet,
   Text,
@@ -15,12 +15,6 @@ import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useLibrary } from "../context/LibraryContext";
-
-// Ảnh bìa sách book01 trong thư mục assets
-const bookCoverImages: Record<string, any> = {
-  book09: require("../../assets/images/book09.png"),
-
-};
 
 export default function ScanBookScreen() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -282,21 +276,6 @@ export default function ScanBookScreen() {
               />
             ) : selectedBook ? (
               <>
-                {/* Hiển thị ảnh book01 */}
-                {bookCoverImages[selectedBook.id] ? (
-                  <Image
-                    source={bookCoverImages[selectedBook.id]}
-                    style={styles.bookImage}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View style={styles.noImageContainer}>
-                    <Text style={styles.noImageText}>
-                      Chưa có ảnh bìa
-                    </Text>
-                  </View>
-                )}
-
                 {/* Tên sách */}
                 <Text style={styles.bookTitle}>
                   {selectedBook.title}
@@ -563,7 +542,7 @@ const styles = StyleSheet.create({
 
   bottomExitButtonText: {
     textAlign: "center",
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "bold",
     color: "#333333",
   },
@@ -589,30 +568,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 18,
     color: "#222222",
-  },
-
-  bookImage: {
-    width: 120,
-    height: 160,
-    alignSelf: "center",
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-
-  noImageContainer: {
-    width: 120,
-    height: 160,
-    alignSelf: "center",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#EEEEEE",
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-
-  noImageText: {
-    color: "#777777",
-    textAlign: "center",
   },
 
   bookTitle: {
